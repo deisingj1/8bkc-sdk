@@ -282,7 +282,7 @@ static void kchal_init_common() {
 	initstate|=INIT_COMMON_DONE;
 }
 
-void kchal_init_hw() {
+void kchal_init_hw(int flags) {
 	if (initstate&INIT_HW_DONE) return; //already did this
 	oledMux=xSemaphoreCreateMutex();
 	configMux=xSemaphoreCreateMutex();
@@ -315,20 +315,18 @@ void kchal_init_hw() {
 	if (initstate==(INIT_HW_DONE|INIT_SDK_DONE)) kchal_init_common();
 }
 
-void kchal_init_sdk() {
-	esp_err_t r;
+void kchal_init_sdk(int flags) {
 	if (initstate&INIT_SDK_DONE) return; //already did this
 	//Hack: This initializes a bunch of locks etc; that process uses a bunch of locks. If we do not
 	//do it here, it happens in the mgmt task, which is somewhat stack-starved.
 	esp_get_deep_sleep_wake_stub();
 
-#if 0
  //no appfs for fake pocketsprite for now?
 	//Init appfs
 	esp_err_t r=appfsInit(0x43, 3);
 	assert(r==ESP_OK);
 	printf("Appfs inited.\n");
-#endif
+	
 	//Grab relevant nvram variables
 	r=nvs_flash_init();
 	if (r!=ESP_OK) {
@@ -346,22 +344,35 @@ void kchal_init_sdk() {
 		memcpy(&savedConfig, &config, sizeof(config));
 	}
 
-	//We don't have appfs, so we can't deduce the app name. Just assume a generic appname for nvs.
+/*	//We don't have appfs, so we can't deduce the app name. Just assume a generic appname for nvs.
 	char *name="MyApp";
 	printf("Opening NVS storage for app %s\n", name);
 	r=nvs_open(name, NVS_READWRITE, &nvsAppHandle);
 	if (r!=ESP_OK) {
 		printf("Opening app NVS storage failed!\n");
+	}*/
+	appfs_handle_t thisApp;
+	r=appfsGetCurrentApp(&thisApp);
+	if (r==ESP_OK) {
+		const char *name;
+		appfsEntryInfo(thisApp, &name, NULL);
+		printf("Opening NVS storage for app %s\n", name);
+		r=nvs_open(name, NVS_READWRITE, &nvsAppHandle);
+		if (r!=ESP_OK) {
+			printf("Opening app NVS storage failed!\n");
+		}
+	} else {
+		printf("No app running; factory app?\n");
+		r=nvs_open("factoryapp", NVS_READWRITE, &nvsAppHandle);
 	}
-
 	xTaskCreatePinnedToCore(&kchal_mgmt_task, "kchal", 1024*4, NULL, 5, NULL, 0);
 	initstate|=INIT_SDK_DONE;
 	if (initstate==(INIT_HW_DONE|INIT_SDK_DONE)) kchal_init_common();
 }
 
 void kchal_init() {
-	kchal_init_hw();
-	kchal_init_sdk();
+	kchal_init_hw(0);
+	kchal_init_sdk(0);
 }
 
 uint32_t kchal_get_keys() {
@@ -482,8 +493,13 @@ int kchal_get_new_app() {
 }
 
 void kchal_boot_into_new_app() {
+/**
 	printf("ERROR: No chooser in fake hardware!\n");
 	abort();
+	*/
+	esp_deep_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_ON);
+	esp_deep_sleep_enable_timer_wakeup(10);
+	esp_deep_sleep_start();
 }
 
 nvs_handle kchal_get_app_nvsh() {

@@ -21,8 +21,10 @@
 #define KC_CHG_CHARGING 1			/*!< Charger attached, internal battery is charging */
 #define KC_CHG_FULL 2				/*!< Charger attached, battery is fully charged. */
 
-#define KC_SCREEN_W 80				/*!< Screen width, excluding bezel area */
-#define KC_SCREEN_H 64				/*!< Screen height */
+//#define KC_SCREEN_W 80				/*!< Screen width, excluding bezel area */
+#define KC_SCREEN_W 160				/*!< Screen width, excluding bezel area */
+//#define KC_SCREEN_H 64				/*!< Screen height */
+#define KC_SCREEN_H 144				/*!< Screen height */
 
 #ifdef __cplusplus
 extern "C" {

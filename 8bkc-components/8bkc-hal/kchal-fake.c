@@ -475,7 +475,8 @@ void kchal_power_down() {
 }
 
 void kchal_exit_to_chooser() {
-	printf("Exit to chooser not implemented on fake hardware. Aborting!\n");
+	kchal_set_new_app(-1);
+	kchal_boot_into_new_app();
 	abort();
 }
 
@@ -484,12 +485,21 @@ int kchal_get_chg_status() {
 }
 
 void kchal_set_new_app(int fd) {
-	//Stub: no chooser
+	if (fd<0 || fd>255) {
+		REG_WRITE(RTC_CNTL_STORE0_REG, 0);
+	} else {
+		REG_WRITE(RTC_CNTL_STORE0_REG, 0xA5000000|fd);
+	}
 }
 
 int kchal_get_new_app() {
-	//Stub: no chooser
-	return -1;
+	uint32_t r=REG_READ(RTC_CNTL_STORE0_REG);
+	if ((r&0xFF000000)!=0xA5000000) return -1;
+	return r&0xff;
+}
+
+void kchal_set_rtc_reg(uint32_t val) {
+	REG_WRITE(RTC_CNTL_STORE0_REG, val);
 }
 
 void kchal_boot_into_new_app() {

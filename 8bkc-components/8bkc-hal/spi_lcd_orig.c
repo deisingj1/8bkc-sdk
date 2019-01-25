@@ -43,12 +43,14 @@ typedef struct {
     uint8_t databytes; //No of data in data; bit 7 = delay after set; 0xFF = end of cmds.
 } ili_init_cmd_t;
 
+#if (CONFIG_HW_LCD_TYPE == 3)
 static const ili_init_cmd_t ili_init_cmds[]={
     {ILI9225_POWER_CTRL1, {0x00,0x00}, 2}, // Set SAP,DSTB,STB
     {ILI9225_POWER_CTRL2, {0x00,0x00}, 2}, // Set APON,PON,AON,VCI1EN,VC
     {ILI9225_POWER_CTRL3, {0x00,0x00}, 2}, // Set BT,DC1,DC2,DC3
     {ILI9225_POWER_CTRL4, {0x00,0x00}, 2}, // Set GVDD
     {ILI9225_POWER_CTRL5, {0x00,0x00}, 0x82}, // Set VCOMH/VCOML voltage
+	 {0x00,{0}, 0x80},
     // Power-on sequence
     {ILI9225_POWER_CTRL2, {0x00,0x18}, 2}, // Set APON,PON,AON,VCI1EN,VC
     {ILI9225_POWER_CTRL3, {0x61,0x21}, 2}, // Set BT,DC1,DC2,DC3
@@ -58,9 +60,10 @@ static const ili_init_cmd_t ili_init_cmds[]={
 
     {ILI9225_POWER_CTRL2, {0x10,0x3B}, 0x82}, // Set APON,PON,AON,VCI1EN,VC
 
+	 {0x00,{0}, 0x80},
     {ILI9225_DRIVER_OUTPUT_CTRL, {0x01,0x1C}, 2}, // set the display line number and display direction
     {ILI9225_LCD_AC_DRIVING_CTRL, {0x01,0x00}, 2}, // set 1 line inversion
-    {ILI9225_ENTRY_MODE, {0x10,0x18}, 2}, // set GRAM write direction and BGR=1.
+    {ILI9225_ENTRY_MODE, {0x10,0x38}, 2}, // set GRAM write direction and BGR=1.
     {ILI9225_DISP_CTRL1, {0x00,0x00}, 2}, // Display off
     {ILI9225_BLANK_PERIOD_CTRL1, {0x08,0x08}, 2}, // set the back porch and front porch
     {ILI9225_FRAME_CYCLE_CTRL, {0x11, 0x00}, 2}, // set the clocks number per line
@@ -70,6 +73,7 @@ static const ili_init_cmd_t ili_init_cmds[]={
     {ILI9225_RAM_ADDR_SET1, {0x00,0x00}, 2}, // RAM Address
     {ILI9225_RAM_ADDR_SET2, {0x00,0x00}, 2}, // RAM Address
 
+	 {0x00,{0}, 0x80},
     /* Set GRAM area */
     {ILI9225_GATE_SCAN_CTRL, {0x00,0x00}, 2}, 
     {ILI9225_VERTICAL_SCROLL_CTRL1, {0x00,0xDB}, 2}, 
@@ -82,8 +86,73 @@ static const ili_init_cmd_t ili_init_cmds[]={
     {ILI9225_VERTICAL_WINDOW_ADDR1, {0x00, 0xDB}, 2}, 
     {ILI9225_VERTICAL_WINDOW_ADDR2, {0x00,0x00}, 2}, 
 
+	 {0x00,{0}, 0x80},
     /* Set GAMMA curve */
-    {ILI9225_GAMMA_CTRL1, {0x00, 0x00}, 2},     
+    {ILI9225_GAMMA_CTRL1, {0x00, 0x00}, 2},     startWrite();
+    _writeRegister(ILI9225_POWER_CTRL1, 0x0000); // Set SAP,DSTB,STB
+    _writeRegister(ILI9225_POWER_CTRL2, 0x0000); // Set APON,PON,AON,VCI1EN,VC
+    _writeRegister(ILI9225_POWER_CTRL3, 0x0000); // Set BT,DC1,DC2,DC3
+    _writeRegister(ILI9225_POWER_CTRL4, 0x0000); // Set GVDD
+    _writeRegister(ILI9225_POWER_CTRL5, 0x0000); // Set VCOMH/VCOML voltage
+    endWrite();
+    delay(40); 
+
+    // Power-on sequence
+    startWrite();
+    _writeRegister(ILI9225_POWER_CTRL2, 0x0018); // Set APON,PON,AON,VCI1EN,VC
+    _writeRegister(ILI9225_POWER_CTRL3, 0x6121); // Set BT,DC1,DC2,DC3
+    _writeRegister(ILI9225_POWER_CTRL4, 0x006F); // Set GVDD   /*007F 0088 */
+    _writeRegister(ILI9225_POWER_CTRL5, 0x495F); // Set VCOMH/VCOML voltage
+    _writeRegister(ILI9225_POWER_CTRL1, 0x0800); // Set SAP,DSTB,STB
+    endWrite();
+    delay(10);
+    startWrite();
+    _writeRegister(ILI9225_POWER_CTRL2, 0x103B); // Set APON,PON,AON,VCI1EN,VC
+    endWrite();
+    delay(50);
+
+    startWrite();
+    _writeRegister(ILI9225_DRIVER_OUTPUT_CTRL, 0x011C); // set the display line number and display direction
+    _writeRegister(ILI9225_LCD_AC_DRIVING_CTRL, 0x0100); // set 1 line inversion
+    _writeRegister(ILI9225_ENTRY_MODE, 0x1038); // set GRAM write direction and BGR=1.
+    _writeRegister(ILI9225_DISP_CTRL1, 0x0000); // Display off
+    _writeRegister(ILI9225_BLANK_PERIOD_CTRL1, 0x0808); // set the back porch and front porch
+    _writeRegister(ILI9225_FRAME_CYCLE_CTRL, 0x1100); // set the clocks number per line
+    _writeRegister(ILI9225_INTERFACE_CTRL, 0x0000); // CPU interface
+    _writeRegister(ILI9225_OSC_CTRL, 0x0D01); // Set Osc  /*0e01*/
+    _writeRegister(ILI9225_VCI_RECYCLING, 0x0020); // Set VCI recycling
+    _writeRegister(ILI9225_RAM_ADDR_SET1, 0x0000); // RAM Address
+    _writeRegister(ILI9225_RAM_ADDR_SET2, 0x0000); // RAM Address
+
+    /* Set GRAM area */
+    _writeRegister(ILI9225_GATE_SCAN_CTRL, 0x0000); 
+    _writeRegister(ILI9225_VERTICAL_SCROLL_CTRL1, 0x00DB); 
+    _writeRegister(ILI9225_VERTICAL_SCROLL_CTRL2, 0x0000); 
+    _writeRegister(ILI9225_VERTICAL_SCROLL_CTRL3, 0x0000); 
+    _writeRegister(ILI9225_PARTIAL_DRIVING_POS1, 0x00DB); 
+    _writeRegister(ILI9225_PARTIAL_DRIVING_POS2, 0x0000); 
+    _writeRegister(ILI9225_HORIZONTAL_WINDOW_ADDR1, 0x00AF); 
+    _writeRegister(ILI9225_HORIZONTAL_WINDOW_ADDR2, 0x0000); 
+    _writeRegister(ILI9225_VERTICAL_WINDOW_ADDR1, 0x00DB); 
+    _writeRegister(ILI9225_VERTICAL_WINDOW_ADDR2, 0x0000); 
+
+    /* Set GAMMA curve */
+    _writeRegister(ILI9225_GAMMA_CTRL1, 0x0000); 
+    _writeRegister(ILI9225_GAMMA_CTRL2, 0x0808); 
+    _writeRegister(ILI9225_GAMMA_CTRL3, 0x080A); 
+    _writeRegister(ILI9225_GAMMA_CTRL4, 0x000A); 
+    _writeRegister(ILI9225_GAMMA_CTRL5, 0x0A08); 
+    _writeRegister(ILI9225_GAMMA_CTRL6, 0x0808); 
+    _writeRegister(ILI9225_GAMMA_CTRL7, 0x0000); 
+    _writeRegister(ILI9225_GAMMA_CTRL8, 0x0A00); 
+    _writeRegister(ILI9225_GAMMA_CTRL9, 0x0710); 
+    _writeRegister(ILI9225_GAMMA_CTRL10, 0x0710); 
+
+    _writeRegister(ILI9225_DISP_CTRL1, 0x0012); 
+    endWrite();
+    delay(50); 
+    startWrite();
+    _writeRegister(ILI9225_DISP_CTRL1, 0x1017);
     {ILI9225_GAMMA_CTRL2, {0x08, 0x08}, 2},  
     {ILI9225_GAMMA_CTRL3, {0x08, 0x0A}, 2}, 
     {ILI9225_GAMMA_CTRL4, {0x00, 0x0A}, 2}, 
@@ -94,21 +163,105 @@ static const ili_init_cmd_t ili_init_cmds[]={
     {ILI9225_GAMMA_CTRL9, {0x07, 0x10}, 2}, 
     {ILI9225_GAMMA_CTRL10, {0x07, 0x10}, 2}, 
 
+	 {0x00,{0}, 0x80},
     {ILI9225_DISP_CTRL1, {0x00,0x12}, 0x82}, 
-    {ILI9225_DISP_CTRL1, {0x10,0x17}, 0x82},
-
-	 //Set window    
-	 {ILI9225_ENTRY_MODE, {0x10,0x18}, 0x82},
-    {ILI9225_HORIZONTAL_WINDOW_ADDR1,{0x00,0x9F}, 2},
-    {ILI9225_HORIZONTAL_WINDOW_ADDR2,{0x00, 0x10}, 0x82},
-
-    {ILI9225_VERTICAL_WINDOW_ADDR1,{0x00, 0xBD}, 2},
-    {ILI9225_VERTICAL_WINDOW_ADDR2,{0x00, 0x1E},0x82},
-
-    {ILI9225_RAM_ADDR_SET1,{0x00,0x0F}, 2},
-    {ILI9225_RAM_ADDR_SET2,{0x00,0x1E}, 2},
-	 {ILI9225_GRAM_DATA_REG,{0},0xFF}
+	 {0x00,{0}, 0x80},
+    {ILI9225_DISP_CTRL1, {0x10,0x17}, 0xff}
 };
+#endif
+
+#if (CONFIG_HW_LCD_TYPE == 2)
+//for ST7735R
+static const ili_init_cmd_t ili_init_cmds[]={
+    {0x01, {0}, 0x80}, //SWRESET
+    //   {0x00, {0}, 0x80}, //NOP delay?
+    {0x11, {0}, 0x80}, //SLEEPOUT
+    {0xB1, {0x01, 0x2C, 0x2D}, 3}, //FRMCTL1 porch padding
+    {0xB2, {0x01, 0x2C, 0x2D}, 3}, //FRMCTL2 porch padding
+    {0xB3, {0x01, 0x2C, 0x2D, 0x01, 0x2C, 0x2D}, 6}, //FRMCTL3 porch padding
+    {0xB4, {0x07}, 1}, //INVCTR
+    {0xC0, {0xA2, 0x02, 0x84}, 3}, //PWCTR1
+    {0xC1, {0xC5}, 1}, //PWCTR2
+    {0xC2, {0x0A, 0x00}, 2}, //PWCTR3
+    {0xC3, {0x8A, 0x2A}, 2}, //PWCTR4
+    {0xC4, {0x8A, 0xEE}, 2}, //PWCTR5
+    {0xC5, {0x0E}, 1}, //VMCTR1
+    {0x20, {0}, 0}, //INVOFF
+    #if CONFIG_LCD_ROTATED
+    {0x36, {(1<<3)|(1<<5)|(1<<6)|(0<<7)}, 1}, //MADCTL RGB, MV, MX, MY
+    #else
+    {0x36, {(1<<3)|(0<<5)|(1<<6)|(1<<7)}, 1}, //MADCTL
+    #endif
+    {0x3A, {0x05}, 1|0x80}, //COLMOD
+    {0x2A, {0x00, 0x02, 0x00, 0x81}, 4}, //CASET
+    {0x2B, {0x00, 0x01, 0x00, 0xA0}, 4}, //RASET
+    //commented values are for blacktab, good luck!
+    //   {0xE0, {0x09, 0x16, 0x09, 0x20, 0x21, 0x1B, 0x13, 0x19, 0x17, 0x15, 0x1E, 0x2B, 0x04, 0x05, 0x02, 0x0E}, 16},
+    //   {0xE1, {0x0B, 0x14, 0x08, 0x1E, 0x22, 0x1D, 0x18, 0x1E, 0x1B, 0x1A, 0x24, 0x2B, 0x06, 0x06, 0x02, 0x0F}, 16},
+    {0xE0, {0x02, 0x1c, 0x07, 0x12, 0x37, 0x32, 0x29, 0x2d, 0x29, 0x25, 0x2B, 0x39, 0x00, 0x01, 0x03, 0x10}, 16},
+    {0xE1, {0x03, 0x1d, 0x07, 0x06, 0x2E, 0x2C, 0x29, 0x2D, 0x2E, 0x2E, 0x37, 0x3F, 0x00, 0x00, 0x02, 0x10}, 16},
+    {0x13, {0}, 0x0}, //NORON
+    {0x29, {0}, 0x80}, //DISPON
+    {0, {0}, 0xff}
+};
+
+#endif
+
+#if (CONFIG_HW_LCD_TYPE == 1)
+//for ST7789V
+static const ili_init_cmd_t ili_init_cmds[]={
+    {0x36, {(0<<5)|(0<<6)}, 1},
+    {0x3A, {0x55}, 1},
+    {0xB2, {0x0c, 0x0c, 0x00, 0x33, 0x33}, 5},
+    {0xB7, {0x45}, 1},
+    {0xBB, {0x2B}, 1},
+    {0xC0, {0x2C}, 1},
+    {0xC2, {0x01, 0xff}, 2},
+    {0xC3, {0x11}, 1},
+    {0xC4, {0x20}, 1},
+    {0xC6, {0x0f}, 1},
+    {0xD0, {0xA4, 0xA1}, 1},
+    {0xE0, {0xD0, 0x00, 0x05, 0x0E, 0x15, 0x0D, 0x37, 0x43, 0x47, 0x09, 0x15, 0x12, 0x16, 0x19}, 14},
+    {0xE1, {0xD0, 0x00, 0x05, 0x0D, 0x0C, 0x06, 0x2D, 0x44, 0x40, 0x0E, 0x1C, 0x18, 0x16, 0x19}, 14},
+    {0x11, {0}, 0x80},
+    {0x29, {0}, 0x80},
+    {0, {0}, 0xff}
+};
+
+#endif
+
+#if (CONFIG_HW_LCD_TYPE == 0)
+
+//for ILI9341
+static const ili_init_cmd_t ili_init_cmds[]={
+    {0xCF, {0x00, 0x83, 0X30}, 3},
+    {0xED, {0x64, 0x03, 0X12, 0X81}, 4},
+    {0xE8, {0x85, 0x01, 0x79}, 3},
+    {0xCB, {0x39, 0x2C, 0x00, 0x34, 0x02}, 5},
+    {0xF7, {0x20}, 1},
+    {0xEA, {0x00, 0x00}, 2},
+    {0xC0, {0x26}, 1},
+    {0xC1, {0x11}, 1},
+    {0xC5, {0x35, 0x3E}, 2},
+    {0xC7, {0xBE}, 1},
+    {0x36, {0x48}, 1}, //not sure if this mirrors the display correctly...
+    {0x3A, {0x55}, 1},
+    {0xB1, {0x00, 0x1B}, 2},
+    {0xF2, {0x08}, 1},
+    {0x26, {0x01}, 1},
+    {0xE0, {0x1F, 0x1A, 0x18, 0x0A, 0x0F, 0x06, 0x45, 0X87, 0x32, 0x0A, 0x07, 0x02, 0x07, 0x05, 0x00}, 15},
+    {0XE1, {0x00, 0x25, 0x27, 0x05, 0x10, 0x09, 0x3A, 0x78, 0x4D, 0x05, 0x18, 0x0D, 0x38, 0x3A, 0x1F}, 15},
+    {0x2A, {0x00, 0x00, 0x00, 0xEF}, 4},
+    {0x2B, {0x00, 0x00, 0x01, 0x3f}, 4}, 
+    {0x2C, {0}, 0},
+    {0xB7, {0x07}, 1},
+    {0xB6, {0x0A, 0x82, 0x27, 0x00}, 4},
+    {0x11, {0}, 0x80},
+    {0x29, {0}, 0x80},
+    {0, {0}, 0xff}
+};
+
+#endif
 
 static spi_device_handle_t spi;
 
@@ -166,8 +319,6 @@ void ili_init(spi_device_handle_t spi)
     //Send all the commands
     while (ili_init_cmds[cmd].databytes!=0xff) {
         uint8_t dmdata[16];
-
-	     //gpio_set_level(PIN_NUM_CS, 0);
         ili_cmd(spi, ili_init_cmds[cmd].cmd);
         //Need to copy from flash to DMA'able memory
         memcpy(dmdata, ili_init_cmds[cmd].data, 16);
@@ -175,8 +326,7 @@ void ili_init(spi_device_handle_t spi)
         if (ili_init_cmds[cmd].databytes&0x80) {
             vTaskDelay(100 / portTICK_RATE_MS);
         }
-	     //gpio_set_level(PIN_NUM_CS, 1);
-		  cmd++;
+        cmd++;
     }
 
     ///Enable backlight
@@ -185,25 +335,6 @@ void ili_init(spi_device_handle_t spi)
 #else
     gpio_set_level(PIN_NUM_BCKL, 1);
 #endif
-	/*
-	for(int i=0; i < 1000; i++) {
-		vTaskDelay(100 / portTICK_RAdd`TE_MS);
-		gpio_set_level(PIN_NUM_DC, 1);
-	   gpio_set_level(PIN_NUM_CS, 0);
-	   uint16_t data = COLOR_RED;
-	   for(uint16_t bit = 0x8000; bit; bit >>= 1){
-         if((data) & bit){
-            gpio_set_level(PIN_NUM_MOSI,1);
-         } else {
-            gpio_set_level(PIN_NUM_MOSI,0);
-         }
-         gpio_set_level(PIN_NUM_CLK,1);
-     	   gpio_set_level(PIN_NUM_CLK,0);
-   	}
-		gpio_set_level(PIN_NUM_CS,1);
-	}
-	*/
-	
 
 }
 
@@ -214,11 +345,11 @@ static void send_header_start(spi_device_handle_t spi, int xpos, int ypos, int w
     int x;
     //Transaction descriptors. Declared static so they're not allocated on the stack; we need this memory even when this
     //function is finished because the SPI driver needs access to it even while we're already calculating the next line.
-    static spi_transaction_t trans[1];
+    static spi_transaction_t trans[5];
 
     //In theory, it's better to initialize trans and data only once and hang on to the initialized
     //variables. 
-    for (x=0; x<1; x++) {
+    for (x=0; x<5; x++) {
         memset(&trans[x], 0, sizeof(spi_transaction_t));
         if ((x&1)==0) {
             //Even transfers are commands
@@ -231,7 +362,6 @@ static void send_header_start(spi_device_handle_t spi, int xpos, int ypos, int w
         }
         trans[x].flags=SPI_TRANS_USE_TXDATA;
     }
-	 /*
     trans[0].tx_data[0]=0x2A;           //Column Address Set
     trans[1].tx_data[0]=xpos>>8;              //Start Col High
     trans[1].tx_data[1]=xpos;              //Start Col Low
@@ -243,32 +373,9 @@ static void send_header_start(spi_device_handle_t spi, int xpos, int ypos, int w
     trans[3].tx_data[2]=(ypos+h-1)>>8;    //end page high
     trans[3].tx_data[3]=(ypos+h-1)&0xff;  //end page low
     trans[4].tx_data[0]=0x2C;           //memory write
-	
-	 trans[0].tx_data[0]=ILI9225_ENTRY_MODE;
-	 trans[1].tx_data[0]=0x00;
-	 trans[1].tx_data[1]=0x10;
-	
-	 trans[2].tx_data[0]=ILI9225_HORIZONTAL_WINDOW_ADDR1;
-	 //trans[3].tx_data[0]=(xpos+w-1)>>8;
-	 //trans[3].tx_data[1]=(xpos+w-1)&0xff;
-	 trans[3].tx_data[0]=0x00;
-	 trans[3].tx_data[1]=0xAF;
-	 trans[4].tx_data[0]=ILI9225_HORIZONTAL_WINDOW_ADDR2;
-	 trans[5].tx_data[0]=0x00;
-	 trans[5].tx_data[1]=0x00;
-	 trans[6].tx_data[0]=ILI9225_VERTICAL_WINDOW_ADDR1;
-	 //trans[5].tx_data[0]=(ypos+h-1)>>8;
-	 //trans[5].tx_data[1]=(ypos+h-1)&0xff;
-	 trans[7].tx_data[0]=0x00;
-	 trans[7].tx_data[1]=0xDB;
-	 trans[8].tx_data[0]=ILI9225_VERTICAL_WINDOW_ADDR2;
-	 trans[9].tx_data[0]=0x00;
-	 trans[9].tx_data[1]=0x00;*/
-	 trans[0].tx_data[0]=ILI9225_GRAM_DATA_REG;
-	 //trans[2].flags=0;
 
     //Queue all transactions.
-    for (x=0; x<1; x++) {
+    for (x=0; x<5; x++) {
         ret=spi_device_queue_trans(spi, &trans[x], portMAX_DELAY);
         assert(ret==ESP_OK);
     }
@@ -285,7 +392,7 @@ void send_header_cleanup(spi_device_handle_t spi)
     spi_transaction_t *rtrans;
     esp_err_t ret;
     //Wait for all 5 transactions to be done and get back the results.
-    for (int x=0; x<1; x++) {
+    for (int x=0; x<5; x++) {
         ret=spi_device_get_trans_result(spi, &rtrans, portMAX_DELAY);
         assert(ret==ESP_OK);
         //We could inspect rtrans now if we received any info back. The LCD is treated as write-only, though.

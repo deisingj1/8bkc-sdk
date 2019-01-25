@@ -34,6 +34,9 @@ config HW_LCD_TYPE_ST
 config HW_LCD_TYPE_ST7735R
 	bool "ST7735R"
 
+config HW_LCD_TYPE_ILI9225
+	bool "ILI9225"
+
 endchoice
 
 config HW_WROVERKIT
@@ -51,6 +54,7 @@ config HW_LCD_TYPE
 	default 0 if HW_LCD_TYPE_ILI
 	default 1 if HW_LCD_TYPE_ST
 	default 2 if HW_LCD_TYPE_ST7735R
+	default 3 if HW_LCD_TYPE_ILI9225
 
 config LCD_ROTATED
 	bool "LCD Rotate CCW 90"

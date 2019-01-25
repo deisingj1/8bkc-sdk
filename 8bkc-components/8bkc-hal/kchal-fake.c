@@ -33,7 +33,10 @@ SemaphoreHandle_t configMux;
 #define OLED_REAL_H 160
 #define OLED_REAL_W 128
 #endif
-#else
+#elif (CONFIG_HW_LCD_TYPE == 3) // this is the ILI9225
+#define OLED_REAL_H 144
+#define OLED_REAL_W 160
+#else									  // all others
 #define OLED_REAL_H 320
 #define OLED_REAL_W 240
 #endif 

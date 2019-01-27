@@ -233,7 +233,7 @@ void fakeCustomKeyInit(){
 		#if CONFIG_HW_JOYSTICK_ENABLE
 		.pin_bit_mask=((1<<CONFIG_HW_A_BUTTON)|(1<<CONFIG_HW_B_BUTTON)|(1<<CONFIG_HW_SELECT_BUTTON)|(1<<CONFIG_HW_START_BUTTON))
 		#else
-		.pin_bit_mask=((1<<CONFIG_HW_RIGHT_BUTTON)|(1<<CONFIG_HW_LEFT_BUTTON)|(1<<CONFIG_HW_UP_BUTTON)|(1<<CONFIG_HW_DOWN_BUTTON)|(1<<CONFIG_HW_B_BUTTON)|(1<<CONFIG_HW_A_BUTTON)|(1<<CONFIG_HW_SELECT_BUTTON)|(1<<CONFIG_HW_START_BUTTON))
+		.pin_bit_mask=((1<<CONFIG_HW_RIGHT_BUTTON)|(1<<CONFIG_HW_LEFT_BUTTON)|(1<<CONFIG_HW_UP_BUTTON)|(1<<CONFIG_HW_DOWN_BUTTON)|(1<<CONFIG_HW_B_BUTTON)|(1<<CONFIG_HW_A_BUTTON)|(1<<CONFIG_HW_SELECT_BUTTON)|(1<<CONFIG_HW_START_BUTTON)|(1<<CONFIG_HW_PWR_BUTTON))
 		#endif
 		#endif
 	};
@@ -267,6 +267,7 @@ static void kchal_mgmt_task(void *args) {
 		if (!(io&(1<<CONFIG_HW_START_BUTTON)))  b|=KC_BTN_START;
 		if (!(io&(1<<CONFIG_HW_A_BUTTON)))      b|=KC_BTN_A;
 		if (!(io&(1<<CONFIG_HW_B_BUTTON)))      b|=KC_BTN_B;
+		if (!(io&(1<<CONFIG_HW_PWR_BUTTON)))      b|=KC_BTN_POWER;
 		
 	    printf("%02x\n",b);
 		buttons=b;

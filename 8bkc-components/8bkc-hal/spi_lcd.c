@@ -62,7 +62,7 @@ static const ili_init_cmd_t ili_init_cmds[]={
     {ILI9225_LCD_AC_DRIVING_CTRL, {0x01,0x00}, 2}, // set 1 line inversion
     {ILI9225_ENTRY_MODE, {0x10,0x18}, 2}, // set GRAM write direction and BGR=1.
     {ILI9225_DISP_CTRL1, {0x00,0x00}, 2}, // Display off
-    {ILI9225_BLANK_PERIOD_CTRL1, {0x08,0x08}, 2}, // set the back porch and front porch
+    {ILI9225_BLANK_PERIOD_CTRL1, {0x04,0x04}, 2}, // set the back porch and front porch
     {ILI9225_FRAME_CYCLE_CTRL, {0x11, 0x00}, 2}, // set the clocks number per line
     {ILI9225_INTERFACE_CTRL, {0x00,0x00}, 2}, // CPU interface
     {ILI9225_OSC_CTRL, {0x0D,0x01}, 2}, // Set Osc  /*0e01*/
@@ -97,18 +97,24 @@ static const ili_init_cmd_t ili_init_cmds[]={
     {ILI9225_DISP_CTRL1, {0x00,0x12}, 0x82}, 
     {ILI9225_DISP_CTRL1, {0x10,0x17}, 0x82},
 
-	 //Set window    
-	 {ILI9225_ENTRY_MODE, {0x10,0x18}, 0x82},
-    {ILI9225_HORIZONTAL_WINDOW_ADDR1,{0x00,0x9F}, 2},
-    {ILI9225_HORIZONTAL_WINDOW_ADDR2,{0x00, 0x10}, 0x82},
-
-    {ILI9225_VERTICAL_WINDOW_ADDR1,{0x00, 0xBD}, 2},
-    {ILI9225_VERTICAL_WINDOW_ADDR2,{0x00, 0x1E},0x82},
-
-    {ILI9225_RAM_ADDR_SET1,{0x00,0x0F}, 2},
-    {ILI9225_RAM_ADDR_SET2,{0x00,0x1E}, 2},
 	 {ILI9225_GRAM_DATA_REG,{0},0xFF}
 };
+
+static const ili_init_cmd_t ili_window_cmds[]={
+	 //Set window    
+	{ILI9225_ENTRY_MODE, {0x10,0x18}, 0x82},
+   {ILI9225_HORIZONTAL_WINDOW_ADDR1,{0x00,0x9F}, 2},
+   {ILI9225_HORIZONTAL_WINDOW_ADDR2,{0x00, 0x10}, 0x82},
+
+   {ILI9225_VERTICAL_WINDOW_ADDR1,{0x00, 0xBD}, 2},
+   {ILI9225_VERTICAL_WINDOW_ADDR2,{0x00, 0x1E},0x82},
+
+   {ILI9225_RAM_ADDR_SET1,{0x00,0x10}, 2},
+   {ILI9225_RAM_ADDR_SET2,{0x00,0xBD}, 0x82},
+	{ILI9225_GRAM_DATA_REG,{0},0xFF}
+};
+
+
 
 static spi_device_handle_t spi;
 
@@ -167,7 +173,6 @@ void ili_init(spi_device_handle_t spi)
     while (ili_init_cmds[cmd].databytes!=0xff) {
         uint8_t dmdata[16];
 
-	     //gpio_set_level(PIN_NUM_CS, 0);
         ili_cmd(spi, ili_init_cmds[cmd].cmd);
         //Need to copy from flash to DMA'able memory
         memcpy(dmdata, ili_init_cmds[cmd].data, 16);
@@ -175,10 +180,34 @@ void ili_init(spi_device_handle_t spi)
         if (ili_init_cmds[cmd].databytes&0x80) {
             vTaskDelay(100 / portTICK_RATE_MS);
         }
-	     //gpio_set_level(PIN_NUM_CS, 1);
 		  cmd++;
     }
 
+	 //Blank the entire LCD
+	 ili_cmd(spi,ILI9225_GRAM_DATA_REG);
+	 #define FILLCOLOR 0x00
+	 for(int c=0; c < (220*176*2);c++) {
+	     uint8_t dmdata[16];
+		  for(int index=0; index < 16; index++) {
+		     dmdata[index] = FILLCOLOR;
+		  }
+		  ili_data(spi,dmdata,16);
+	 }
+
+	 cmd=0;		//reset counter
+    //Copy data to set window
+	 while (ili_window_cmds[cmd].databytes!=0xff) { 
+        uint8_t dmdata[16];
+
+        ili_cmd(spi, ili_window_cmds[cmd].cmd);
+        //Need to copy from flash to DMA'able memory
+        memcpy(dmdata, ili_window_cmds[cmd].data, 16);
+        ili_data(spi, dmdata, ili_window_cmds[cmd].databytes&0x1F);
+        if (ili_window_cmds[cmd].databytes&0x80) {
+            vTaskDelay(100 / portTICK_RATE_MS);
+        }
+		  cmd++;
+    }
     ///Enable backlight
 #if CONFIG_HW_INV_BL
     gpio_set_level(PIN_NUM_BCKL, 0);
@@ -265,7 +294,6 @@ static void send_header_start(spi_device_handle_t spi, int xpos, int ypos, int w
 	 trans[9].tx_data[0]=0x00;
 	 trans[9].tx_data[1]=0x00;*/
 	 trans[0].tx_data[0]=ILI9225_GRAM_DATA_REG;
-	 //trans[2].flags=0;
 
     //Queue all transactions.
     for (x=0; x<1; x++) {
@@ -329,7 +357,8 @@ void spi_lcd_init() {
         #else
 		  .clock_speed_hz=26000000,               //Clock out at 26 MHz. Yes, that's heavily overclocked.
         #endif
-		  .mode=0,                                //SPI mode 0
+		  .mode=0,          								//SPI mode 0
+		  .flags=SPI_DEVICE_HALFDUPLEX,
         .spics_io_num=PIN_NUM_CS,               //CS pin
         .queue_size=10,               //We want to be able to queue this many transfers
         .pre_cb=ili_spi_pre_transfer_callback,  //Specify pre-transfer callback to handle D/C line

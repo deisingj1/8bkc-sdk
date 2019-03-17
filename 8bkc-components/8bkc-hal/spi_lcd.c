@@ -60,7 +60,7 @@ static const ili_init_cmd_t ili_init_cmds[]={
 
     {ILI9225_DRIVER_OUTPUT_CTRL, {0x01,0x1C}, 2}, // set the display line number and display direction
     {ILI9225_LCD_AC_DRIVING_CTRL, {0x01,0x00}, 2}, // set 1 line inversion
-    {ILI9225_ENTRY_MODE, {0x10,0x18}, 2}, // set GRAM write direction and BGR=1.
+    {ILI9225_ENTRY_MODE, {0x10,0x38}, 2}, // set GRAM write direction and BGR=1. This is
     {ILI9225_DISP_CTRL1, {0x00,0x00}, 2}, // Display off
     {ILI9225_BLANK_PERIOD_CTRL1, {0x04,0x04}, 2}, // set the back porch and front porch
     {ILI9225_FRAME_CYCLE_CTRL, {0x11, 0x00}, 2}, // set the clocks number per line
@@ -101,16 +101,17 @@ static const ili_init_cmd_t ili_init_cmds[]={
 };
 
 static const ili_init_cmd_t ili_window_cmds[]={
-	 //Set window    
-	{ILI9225_ENTRY_MODE, {0x10,0x18}, 0x82},
+	 //Set rotation and stuff
+	{ILI9225_ENTRY_MODE, {0x10,0x28}, 0x82},
    {ILI9225_HORIZONTAL_WINDOW_ADDR1,{0x00,0x9F}, 2},
    {ILI9225_HORIZONTAL_WINDOW_ADDR2,{0x00, 0x10}, 0x82},
 
    {ILI9225_VERTICAL_WINDOW_ADDR1,{0x00, 0xBD}, 2},
    {ILI9225_VERTICAL_WINDOW_ADDR2,{0x00, 0x1E},0x82},
 
-   {ILI9225_RAM_ADDR_SET1,{0x00,0x10}, 2},
-   {ILI9225_RAM_ADDR_SET2,{0x00,0xBD}, 0x82},
+   //THIS NEEDS to be changed according to the orientaiton set in entry mode above
+   {ILI9225_RAM_ADDR_SET1,{0x00,0x9F}, 2},
+   {ILI9225_RAM_ADDR_SET2,{0x00,0x1E}, 0x82},
 	{ILI9225_GRAM_DATA_REG,{0},0xFF}
 };
 
@@ -272,11 +273,11 @@ static void send_header_start(spi_device_handle_t spi, int xpos, int ypos, int w
     trans[3].tx_data[2]=(ypos+h-1)>>8;    //end page high
     trans[3].tx_data[3]=(ypos+h-1)&0xff;  //end page low
     trans[4].tx_data[0]=0x2C;           //memory write
-	
+
 	 trans[0].tx_data[0]=ILI9225_ENTRY_MODE;
 	 trans[1].tx_data[0]=0x00;
 	 trans[1].tx_data[1]=0x10;
-	
+
 	 trans[2].tx_data[0]=ILI9225_HORIZONTAL_WINDOW_ADDR1;
 	 //trans[3].tx_data[0]=(xpos+w-1)>>8;
 	 //trans[3].tx_data[1]=(xpos+w-1)&0xff;
